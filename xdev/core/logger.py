@@ -1,4 +1,4 @@
-#from termcolor2 import c
+from datetime import datetime
 
 class logger(object):
     SCOPE_MSG= "LOG"
@@ -8,8 +8,15 @@ class logger(object):
 
     __prefix = "-"
 
-    def __init__(self, prefix):
+    def __init__(self, prefix, fileoutputpath=None):
         self.__prefix = prefix
+        self.__fileoutputpath = None
+        self.__fileoutput = None
+        self.set_path(self.__fileoutputpath)
+
+    def __del__(self):
+        if self.__fileoutput != None:
+            self.__fileoutput.close()
 
     @classmethod
     def from_prefix(cls,prefix:str):
@@ -22,13 +29,26 @@ class logger(object):
             prefix = parentLogger.prefix + cls.PREFIX_SEPARATOR + prefix
         return cls(prefix)
 
+    def set_path(self,fileoutputpath):
+        if fileoutputpath != None:
+            assert isinstance(fileoutputpath,str), "log file path has to be a string, '%s' given" % str(type(fileoutputpath))
+            self.__fileoutputpath = fileoutputpath
+            self.__fileoutput = open(self.__fileoutputpath, "a")
+
+    @property
+    def path(self):
+        return self.__fileoutputpath
 
     @property
     def prefix(self):
         return self.__prefix
 
     def __log(self, scope, prefix, msg):
-        return print("%s: [%s] %s" % (scope.upper(), prefix.upper(), msg))
+        dt = datetime.utcnow()
+        s = "%d.%d.%d %d:%d:%d.%d %s: [%s] %s" % (dt.year, dt.month, dt.day, dt.hour, dt.minute, dt.second, dt.microsecond, scope.upper(), prefix.upper(), msg)
+        if self.__fileoutput != None:
+            self.__fileoutput.write(s + "\n")
+        return print(s)
 
     def msg(self, msg):
         #return print с("%s: [%s] %s" % (self.SCOPE_MSG.upper(), self.__mPrefix.upper(), msg)).white.on_black
