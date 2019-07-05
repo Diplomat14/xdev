@@ -1,4 +1,5 @@
 from setuptools import setup
+import os
 
 def readme():
     with open(os.path.dirname(os.path.abspath(__file__)) + '/README.rst') as f:
