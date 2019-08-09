@@ -33,7 +33,7 @@ class logger(object):
         if fileoutputpath != None:
             assert isinstance(fileoutputpath,str), "log file path has to be a string, '%s' given" % str(type(fileoutputpath))
             self.__fileoutputpath = fileoutputpath
-            self.__fileoutput = open(self.__fileoutputpath, "a")
+            self.__fileoutput = open(self.__fileoutputpath, "a", encoding="utf-8")
 
     @property
     def path(self):
@@ -45,9 +45,9 @@ class logger(object):
 
     def __log(self, scope, prefix, msg):
         dt = datetime.utcnow()
-        s = "%d.%d.%d %d:%d:%d.%d %s: [%s] %s" % (dt.year, dt.month, dt.day, dt.hour, dt.minute, dt.second, dt.microsecond, scope.upper(), prefix.upper(), msg)
+        s = u"%d.%d.%d %d:%d:%d.%d %s: [%s] %s" % (dt.year, dt.month, dt.day, dt.hour, dt.minute, dt.second, dt.microsecond, scope.upper(), prefix.upper(), msg)
         if self.__fileoutput != None:
-            self.__fileoutput.write(s + "\n")
+            self.__fileoutput.write((s+"\n"))
         return print(s)
 
     def msg(self, msg):
