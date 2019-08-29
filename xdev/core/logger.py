@@ -13,7 +13,7 @@ class logger(object):
         self.__prefix = prefix
         self.__fileoutputpath = None
         self.__fileoutput = None
-        self.__debug = debug
+        self.set_debug(debug)
         self.set_path(self.__fileoutputpath)
 
     def __del__(self):
@@ -31,11 +31,16 @@ class logger(object):
             prefix = parentLogger.prefix + cls.PREFIX_SEPARATOR + prefix
         return cls(prefix)
 
+    def set_debug(self,debug):
+        assert isinstance(debug,bool), "Debug parameter shall be of bool value"
+        self.__debug = debug
+
     def set_path(self,fileoutputpath):
         if fileoutputpath != None:
             assert isinstance(fileoutputpath,str), "log file path has to be a string, '%s' given" % str(type(fileoutputpath))
             self.__fileoutputpath = fileoutputpath
             self.__fileoutput = open(self.__fileoutputpath, "a", encoding="utf-8")
+
 
     @property
     def path(self):
