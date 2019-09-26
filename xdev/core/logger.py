@@ -52,13 +52,20 @@ class logger(object):
 
     def __log(self, scope, prefix, msg, exception = None):
         dt = datetime.utcnow()
-        s = u"%d.%d.%d %d:%d:%d.%d %s: [%s] %s" % (dt.year, dt.month, dt.day, dt.hour, dt.minute, dt.second, dt.microsecond, scope.upper(), prefix.upper(), msg)
-        if self.__fileoutput != None:
-            self.__fileoutput.write((s+"\n"))
-        r = print(s)
 
         if exception != None and self.__debug == True:
             traceback.print_exception(type(exception), exception, exception.__traceback__)
+
+        if exception == None:
+            s = u"%d.%d.%d %d:%d:%d.%d %s: [%s] %s" % (dt.year, dt.month, dt.day, dt.hour, dt.minute, dt.second, dt.microsecond, scope.upper(), prefix.upper(), msg)
+        else:
+            s = u"%d.%d.%d %d:%d:%d.%d %s: [%s] %s #ex: %s" % (
+            dt.year, dt.month, dt.day, dt.hour, dt.minute, dt.second, dt.microsecond, scope.upper(), prefix.upper(),
+            msg, str(exception))
+            
+        if self.__fileoutput != None:
+            self.__fileoutput.write((s+"\n"))
+        r = print(s)
 
         return r
 

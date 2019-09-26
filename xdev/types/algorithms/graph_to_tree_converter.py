@@ -33,6 +33,7 @@ class graph_to_tree_converter(object):
             resulting_tree.add_root_node(root_for_not_processed)
         self.processnotprocessed_simpleflat(datagraph, resulting_tree, root_for_not_processed)
 
+        l.msg("Grah to tree convertion finished")
         return resulting_tree
 
 
