@@ -1,67 +1,105 @@
 from datetime import timedelta
 
+class merge_object(object):
+
+    def __init__(self,data_map,updates_map = {}):
+        assert isinstance(data_map, dict)
+        assert isinstance(updates_map, dict)
+
+        self.__data_map = data_map
+        self.__updates_map = updates_map
+
+    @property
+    def data_map(self):
+        return self.__data_map
+
+    @property
+    def updates_map(self):
+        return self.__updates_map
+
+
+class merge_result(object):
+    def __init__(self,merged_obj,left_changed_fields,right_changed_fields):
+        assert isinstance(merged_obj, merge_object)
+        assert isinstance(left_changed_fields, list)
+        assert isinstance(right_changed_fields, list)
+
+        self.__merged_object = merged_obj
+        self.__left_changed_fields = left_changed_fields
+        self.__right_changed_fields = right_changed_fields
+
+    @property
+    def merged_object(self):
+        return self.__merged_object
+
+    @property
+    def left_changed_fields(self):
+        return self.__left_changed_fields
+
+    @property
+    def right_changed_fields(self):
+        return self.__right_changed_fields
+
+
 class merger(object):
 
     @staticmethod
     # TODO: For now ignoring differences in field existance, thus comparing only those fields which exist in both items
-    def merge_objects(map1, map2, priority_on_map1 = True, skip_fields = None, selected_fields = None, map1_updates = None, map2_updates = None, update_on_updates_diff = False, update_originals = False):
-        map3 = {} # Resulting merged object
-        map3_updates = {} # Latest update dates for object fields
-        map1_changes = [] # What need to be changed in map1
-        map2_changes = [] # What need to be changed in map2
+    def merge_objects(left, right, priority_on_left = True, skip_fields = None, selected_fields = None, update_on_updates_diff = False, update_originals = False):
+        assert isinstance(left, merge_object)
+        assert isinstance(right, merge_object)
+
+        merged = {} # Resulting merged object
+        merged_updates = {} # Latest update dates for object fields
+        left_changes = [] # What need to be changed in left
+        right_changes = [] # What need to be changed in right
 
         if selected_fields is not None:
             fields = selected_fields
         else:
-            fields = list(set(map1.keys())|set(map2.keys()))
+            fields = list(set(left.data_map.keys())|set(right.data_map.keys()))
 
         if skip_fields != None:
             fields = list(set(fields) - set(skip_fields))
 
-        if map1_updates == None:
-            map1_updates = {}
-        if map2_updates == None:
-            map2_updates = {}
-
-
         for f in fields:
-            m1_value = map1[f] if f in map1.keys() else None
-            m2_value = map2[f] if f in map2.keys() else None
+            left_value = left.data_map[f] if f in left.data_map.keys() else None
+            right_value = right.data_map[f] if f in right.data_map.keys() else None
 
-            m1_update = map1_updates[f] if f in map1_updates.keys() else None
-            m2_update = map2_updates[f] if f in map2_updates.keys() else None
+            left_update = left.updates_map[f] if f in left.updates_map.keys() else None
+            right_update = right.updates_map[f] if f in right.updates_map.keys() else None
 
-            m3_value = None
-            map3_update = None
+            merged_value = None
+            merged_update = None
 
-            if m1_update == None and m2_update == None: # Either both are equal values or both don't exist
+            if left_update == None and right_update == None: # Either both are equal values or both don't exist
                 delta = 0
-            elif m1_update != None and m2_update != None:
-                if m1_update > m2_update:
+            elif left_update != None and right_update != None:
+                if left_update > right_update:
                     delta = 1
                 else:
                     delta = -1
             else: # If information for one of them is not available, considering as the same
                 delta = 0
 
-            if m1_value != m2_value or (delta != 0 and update_on_updates_diff == True):
-                if (delta == 0 and priority_on_map1 == True) or (delta > 0):
-                    m3_value = m1_value
-                    map3_update = m1_update
-                    map2_changes.append(f)
+            if left_value != right_value or (delta != 0 and update_on_updates_diff == True):
+                if (delta == 0 and priority_on_left == True) or (delta > 0):
+                    merged_value = left_value
+                    merged_update = left_update
+                    right_changes.append(f)
                     if update_originals == True:
-                        map2[f] = m1_value
+                        right.data_map[f] = left_value
                 else:
-                    m3_value = m2_value
-                    map3_update = m2_update
-                    map1_changes.append(f)
+                    merged_value = right_value
+                    merged_update = right_update
+                    left_changes.append(f)
                     if update_originals == True:
-                        map1[f] = m2_value
+                        left.data_map[f] = right_value
             else:
-                m3_value = m1_value
-                map3_update = m1_update
+                merged_value = left_value
+                merged_update = left_update
 
-            map3[f] = m3_value
-            map3_updates[f] = map3_update
+            merged[f] = merged_value
+            merged_updates[f] = merged_update
 
-        return {'merged':map3,'merged_updated':map3_updates,'map1_changes':map1_changes,'map2_changes':map2_changes}
+        return merge_result(merge_object(merged,merged_updates),left_changes,right_changes)
