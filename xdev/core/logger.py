@@ -29,7 +29,10 @@ class logger(object):
         if parentLogger != None:
             assert isinstance(parentLogger,cls), "Parent object has to be of " + type(cls) + " type"
             prefix = parentLogger.prefix + cls.PREFIX_SEPARATOR + prefix
-        return cls(prefix)
+        l = cls(prefix)
+        if parentLogger != None:
+            l.set_debug( parentLogger.__debug )
+        return l
 
     def set_debug(self,debug):
         assert isinstance(debug,bool), "Debug parameter shall be of bool value"
