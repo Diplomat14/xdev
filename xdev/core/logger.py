@@ -9,12 +9,12 @@ class logger(object):
 
     __prefix = "-"
 
-    def __init__(self, prefix, fileoutputpath=None, debug = False):
+    def __init__(self, prefix, fileoutputpath=None, debug=False):
         self.__prefix = prefix
         self.__fileoutputpath = None
         self.__fileoutput = None
         self.set_debug(debug)
-        self.set_path(self.__fileoutputpath)
+        self.set_path(fileoutputpath)
 
     def __del__(self):
         if self.__fileoutput != None:
@@ -29,9 +29,10 @@ class logger(object):
         if parentLogger != None:
             assert isinstance(parentLogger,cls), "Parent object has to be of " + type(cls) + " type"
             prefix = parentLogger.prefix + cls.PREFIX_SEPARATOR + prefix
-        l = cls(prefix)
-        if parentLogger != None:
-            l.set_debug( parentLogger.__debug )
+            l = cls(prefix, parentLogger.path, parentLogger.__debug)
+        else:
+            l = cls(prefix)
+
         return l
 
     def set_debug(self,debug):
@@ -67,7 +68,8 @@ class logger(object):
             msg, str(exception))
             
         if self.__fileoutput != None:
-            self.__fileoutput.write((s+"\n"))
+            self.__fileoutput.write(s+"\n")
+            self.__fileoutput.flush()
         r = print(s)
 
         return r
@@ -81,5 +83,3 @@ class logger(object):
     def error(self, msg, exception = None):
         #return print c("%s: [%s] %s" % (self.SCOPE_ERR.upper(), self.__mPrefix.upper(), msg)).red.on_black
         return self.__log(self.SCOPE_ERR, self.__prefix, msg, exception)
-
-    
