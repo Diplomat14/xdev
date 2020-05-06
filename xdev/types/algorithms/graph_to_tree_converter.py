@@ -10,7 +10,7 @@ class graph_to_tree_converter(object):
         self.__logger = logger.from_parent('G2T',l)
         self.__data_to_string = data_to_string_converter
 
-    def convert(self, datagraph, starting_nodes, graph_root_for_not_processed_data, rules):
+    def convert(self, datagraph, starting_nodes, graph_root_for_not_processed_data, rules, sort_rules):
         assert isinstance(datagraph, graph_type), "Datagraph is of wrong type"
         assert isinstance(rules, conversionrules), "rules is of wrong type"
 
@@ -18,11 +18,13 @@ class graph_to_tree_converter(object):
 
         l.msg("Converting grah to tree")
         resulting_tree = tree_type(l)
+        if sort_rules:
+            self.sort_graph_nodes(starting_nodes, sort_rules)
         for snode in starting_nodes:
             assert isinstance(snode, graph_node_type), "Node is of wrong type"
             l.msg("Processing node %s" % (self.__data_to_string(snode.data)))
             # Build down provided starting nodes treating them as root nodes for generated tree
-            snode_tree = self.build_down(snode, datagraph, rules)
+            snode_tree = self.build_down(snode, datagraph, rules, sort_rules)
             resulting_tree.addRootSubtree(snode_tree)
 
         # Adding nodes that are unconnected with starting one to a separate tree root node
@@ -38,7 +40,7 @@ class graph_to_tree_converter(object):
 
 
     # Starting from parentnode walks through complex building tree according to provided rules
-    def build_down(self, parent_graph_node, graph, rules):
+    def build_down(self, parent_graph_node, graph, rules, sort_rules):
         l = self.__logger
 
         assert isinstance(parent_graph_node, graph_node_type), "Node is of wrong type"
@@ -60,6 +62,8 @@ class graph_to_tree_converter(object):
             for current_tree_node, current_graph_node in current_nodes_level_map.items():
                 l.msg("Searching for children for node %s" % self.__data_to_string(current_graph_node.data))
                 current_graph_node_children = self.getchildrenbyrules(current_graph_node,rules)
+                if sort_rules:
+                    self.sort_graph_nodes(current_graph_node_children, sort_rules)
                 current_graph_node_new_children_map = self.convert_graph2tree_nodes( current_graph_node_children )
                 current_tree_node.add_children( current_graph_node_new_children_map.keys() )
                 next_nodes_level_map.update(current_graph_node_new_children_map)
@@ -96,6 +100,17 @@ class graph_to_tree_converter(object):
 
         return children
 
+    def raise_(self, ex):
+        raise ex
+
+    def sort_graph_nodes(self, nodes, sort_rules):
+        assert isinstance(nodes, list), "Node is of wrong type"
+        l = self.__logger
+        for k, v in sort_rules.items():
+            nodes.sort(
+                key=lambda node: node.data.getFieldAsString(k) if node.data.hasField(k) else self.raise_(
+                    Exception(' Wrong field for sorting specified')),
+                reverse=v if v else False)
 
     # Adds complex nodes that didn't get to the tree yet to a newly created tree node in a flat structure
     def processnotprocessed_simpleflat(self, graph, tree, notprocessed_root_tree_node):
