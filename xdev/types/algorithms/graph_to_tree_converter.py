@@ -6,9 +6,10 @@ from xdev.core.logger import logger
 
 class graph_to_tree_converter(object):
 
-    def __init__(self,l, data_to_string_converter):
+    def __init__(self,l, data_to_string_converter, value_by_field):
         self.__logger = logger.from_parent('G2T',l)
         self.__data_to_string = data_to_string_converter
+        self.__value_by_field = value_by_field
 
     def convert(self, datagraph, starting_nodes, graph_root_for_not_processed_data, rules, sort_rules):
         assert isinstance(datagraph, graph_type), "Datagraph is of wrong type"
@@ -100,17 +101,13 @@ class graph_to_tree_converter(object):
 
         return children
 
-    def raise_(self, ex):
-        raise ex
-
     def sort_graph_nodes(self, nodes, sort_rules):
         assert isinstance(nodes, list), "Node is of wrong type"
         l = self.__logger
-        for k, v in sort_rules.items():
+        for field, sort_type in sort_rules.items():
             nodes.sort(
-                key=lambda node: node.data.getFieldAsString(k) if node.data.hasField(k) else self.raise_(
-                    Exception(' Wrong field for sorting specified')),
-                reverse=v if v else False)
+                key=lambda node: self.__value_by_field(node.data, field),
+                reverse=True if sort_type == 'desc' else False)
 
     # Adds complex nodes that didn't get to the tree yet to a newly created tree node in a flat structure
     def processnotprocessed_simpleflat(self, graph, tree, notprocessed_root_tree_node):
